@@ -28,7 +28,6 @@ project(KeyCenter VERSION "2.0")
 add_compile_options(-std=c++11)
 
 # install dependencies
-include(EthBuildInfo)
 include(ProjectMHD)
 include(ProjectCryptopp)
 include(ProjectJsonCpp)

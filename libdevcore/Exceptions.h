@@ -69,5 +69,6 @@ struct RLPException : virtual Exception
 
 
 DEV_SIMPLE_EXCEPTION(BadHexCharacter);
+DEV_SIMPLE_EXCEPTION(FailedInvariant);
 
 }  // namespace dev
