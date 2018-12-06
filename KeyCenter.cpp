@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
     if (argc != 2)
     {
         cout << "Usage: ./keycenter <config file>" << endl;
-        cout << "Eg:    ./keycenter <kcconfig.ini>" << endl;
+        cout << "Eg:    ./keycenter kcconfig.ini" << endl;
         return 0;
     }
 
