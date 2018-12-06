@@ -19,9 +19,151 @@
  * @author: jimmyshi
  * @date: 2018-12-04
  */
+#include "KeyCenter.h"
+#include <signal.h>
+#include <unistd.h>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <exception>
+#include <iostream>
 
+using namespace std;
+using namespace dev;
+using namespace jsonrpc;
 
-int main()
+// method
+void BaseServer::decDataKey(const Json::Value& request, Json::Value& response)
 {
+    KCLOG(TRACE) << "[Dec] Receive: " << endl << request.toStyledString() << endl;
+    Json::Value res;
+    try
+    {
+        res["dataKey"] = decryptDataKeyHex(request[0u].asString());
+        res["error"] = 0;
+        res["info"] = "success";
+    }
+    catch (std::exception& e)
+    {
+        res["dataKey"] = "";
+        res["error"] = 1;
+        res["info"] = string(e.what());
+    }
+    response = res;
+    KCLOG(TRACE) << "[Dec] Respond: " << endl << response.toStyledString() << endl;
+}
+
+void BaseServer::encDataKey(const Json::Value& request, Json::Value& response)
+{
+    KCLOG(TRACE) << "[Enc] Receive: " << endl << request.toStyledString() << endl;
+    Json::Value res;
+    try
+    {
+        res["dataKey"] = encryptDataKey(request[0u].asString());
+        res["error"] = 0;
+        res["info"] = "success";
+    }
+    catch (std::exception& e)
+    {
+        res["dataKey"] = "";
+        res["error"] = 1;
+        res["info"] = string(e.what());
+    }
+    response = res;
+    KCLOG(TRACE) << "[Enc] Respond: " << endl << response.toStyledString() << endl;
+}
+
+static bool should_exit = false;
+static void exit_handler(int sig)
+{
+    should_exit = true;
+}
+
+std::string KeyCenter::decryptDataKeyHex(const std::string& _cypherDataKey)
+{
+    bytes enData = fromHex(_cypherDataKey);
+    bytes deData = aesCBCDecrypt(ref(enData), ref(m_superKey));
+    KCLOG(DEBUG) << "Decrypt datakey [cypher/datakey]: " << _cypherDataKey << "/" << toHex(deData)
+                 << endl;
+    return toHex(deData);
+}
+
+std::string KeyCenter::encryptDataKey(const std::string& _dataKey)
+{
+    bytes dataKeyBtyes =
+        bytesConstRef{(unsigned char*)_dataKey.c_str(), _dataKey.length()}.toBytes();
+
+    KCLOG(TRACE) << "Try to encrypt [plain/superkey] " << toHex(dataKeyBtyes) << "/"
+                 << toHex(m_superKey) << endl;
+    bytes deData = aesCBCEncrypt(ref(dataKeyBtyes), ref(m_superKey));
+    KCLOG(DEBUG) << "Encrypt datakey [cypher/datakey]: " << toHex(deData) << "/"
+                 << toHex(dataKeyBtyes) << endl;
+    return toHex(deData);
+}
+
+
+int main(int argc, char* argv[])
+{
+    if (argc != 2)
+    {
+        cout << "Usage: ./keycenter <config file>" << endl;
+        cout << "Eg:    ./keycenter <kcconfig.ini>" << endl;
+        return 0;
+    }
+
+    string path(argv[1]);
+
+    // Parse config
+    int port;
+    bytes superKey;
+    try
+    {
+        boost::property_tree::ptree pt;
+        boost::property_tree::read_ini(path, pt);
+
+        port = pt.get<int>("keycenter.port", 31443);
+        superKey = readableKeyBytes(pt.get<std::string>("keycenter.superkey", ""));
+
+        if (superKey.empty())
+        {
+            KCLOG(ERROR) << "Superkey is empty" << endl;
+            throw;
+        }
+    }
+    catch (std::exception& e)
+    {
+        KCLOG(ERROR) << "Parse configure file " << path << " failed for: " << e.what() << endl;
+        return 0;
+    }
+
+    // Start keycenter
+    try
+    {
+        HttpServer connector(port);
+        KeyCenter keycenter(connector, superKey);
+
+        if (keycenter.StartListening())
+        {
+            // register exit_handler signal
+            signal(SIGABRT, &exit_handler);
+            signal(SIGTERM, &exit_handler);
+            signal(SIGINT, &exit_handler);
+
+            KCLOG(TRACE) << "keycenter stared. Port: " << port << endl;
+            while (!should_exit)
+                sleep(1);
+        }
+        else
+        {
+            KCLOG(ERROR) << "Start Server failed" << endl;
+        }
+    }
+    catch (jsonrpc::JsonRpcException& e)
+    {
+        KCLOG(ERROR) << e.what() << endl;
+    }
+
     return 0;
 }
+
+// curl -X POST --data '{"jsonrpc":"2.0","method":"getDataKey","params":["name"],"id":83}'
+// http://127.0.0.1:31443 |jq

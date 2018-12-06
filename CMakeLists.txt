@@ -26,6 +26,10 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_DIR})
 project(KeyCenter VERSION "2.0")
 
 add_compile_options(-std=c++11)
+set(CMAKE_CXX_FLAGS "-pthread")
+set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
+set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -g -Wall")
 
 # install dependencies
 include(ProjectMHD)
@@ -34,29 +38,23 @@ include(ProjectJsonCpp)
 include(ProjectJsonRpcCpp)
 include(ProjectBoost)
 
-add_subdirectory(libdevcore)
-add_subdirectory(libdevcrypto)
-
 # 并将名称保存到 DIR_SRCS 变量
 aux_source_directory(. DIR_SRCS)
 
 include_directories(${MHD_INCLUDE_DIR})
 include_directories(${JSONCPP_INCLUDE_DIR})
 include_directories(${JSONRPCCPP_INCLUDE_DIR})
+include_directories(${CURL_INCLUDE_DIR})
+include_directories(${BOOST_INCLUDE_DIR})
 
+message(${JSONRPCCPP_INCLUDE_DIR})
+message(${JSONCPP_INCLUDE_DIR})
+message(${CURL_INCLUDE_DIR})
+message(${MHD_INCLUDE_DIR})
 
 # 指定生成目标
 set(EXE_NAME "keycenter")
 add_executable(${EXE_NAME} ${DIR_SRCS})
 # 添加链接库
-target_link_libraries(${EXE_NAME} ${Boost_LIBRARIES})
-target_link_libraries(${EXE_NAME} boost_system)
-target_link_libraries(${EXE_NAME} JsonRpcCpp::Common)
-target_link_libraries(${EXE_NAME} JsonRpcCpp::Client)
-target_link_libraries(${EXE_NAME} JsonRpcCpp::Server)
-target_link_libraries(${EXE_NAME} stdc++)
-
-
-
-
-
+target_link_libraries(${EXE_NAME} Cryptopp stdc++ JsonRpcCpp::Server JsonRpcCpp::Client JsonRpcCpp::Common Boost::Filesystem Boost::Thread)
+target_link_libraries(${EXE_NAME} procps)

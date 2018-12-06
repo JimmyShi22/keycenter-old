@@ -35,6 +35,7 @@
 
 namespace dev
 {
+using errinfo_comment = boost::error_info<struct tag_comment, std::string>;
 /**
  * @brief : Base class for all exceptions
  */
@@ -70,5 +71,7 @@ struct RLPException : virtual Exception
 
 DEV_SIMPLE_EXCEPTION(BadHexCharacter);
 DEV_SIMPLE_EXCEPTION(FailedInvariant);
+DEV_SIMPLE_EXCEPTION(ConfigureFileError);
+DEV_SIMPLE_EXCEPTION(AESKeyLengthError);
 
 }  // namespace dev

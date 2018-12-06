@@ -28,7 +28,7 @@ using namespace std;
 
 namespace dev
 {
-char const* Version = ETH_PROJECT_VERSION;
+// char const* Version = ETH_PROJECT_VERSION;
 bytes const NullBytes;
 std::string const EmptyString;
 

@@ -24,25 +24,13 @@
 
 #pragma once
 
-#include <libdevcore/CommonData.h>
-#include <libdevcore/vector_ref.h>
+#include "Common.h"
+#include "CommonData.h"
+#include "vector_ref.h"
 
 namespace dev
 {
-bytes aesCBCEncrypt(bytesConstRef plainData, std::string const& keyData, int keyLen,
-    bytesConstRef ivData);  ////AES encrypt
-bytes aesCBCDecrypt(bytesConstRef cipherData, std::string const& keyData, int keyLen,
-    bytesConstRef ivData);  // AES decrypt
-
-#if ETH_ENCRYPTTYPE
-bytes gmCBCEncrypt(
-    bytesConstRef plainData, std::string const& keyData, int keyLen, bytesConstRef ivData);
-bytes gmCBCDecrypt(
-    bytesConstRef cipherData, std::string const& keyData, int keyLen, bytesConstRef ivData);
-#endif
-
-bytes origAesCBCEncrypt(
-    bytesConstRef plainData, std::string const& keyData, int keyLen, bytesConstRef ivData);
-bytes origAesCBCDecrypt(
-    bytesConstRef cipherData, std::string const& keyData, int keyLen, bytesConstRef ivData);
+bytes aesCBCEncrypt(bytesConstRef _plainData, bytesConstRef _key);
+bytes aesCBCDecrypt(bytesConstRef _cypherData, bytesConstRef _key);
+bytes readableKeyBytes(const std::string& _readableKey);
 }  // namespace dev
